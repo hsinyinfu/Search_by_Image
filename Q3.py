@@ -1,10 +1,7 @@
 
 # coding: utf-8
 import sift
-import os
 import numpy as np
-import matplotlib.pyplot as plt
-from PIL import Image
 from sklearn.cluster import KMeans
 from sklearn.metrics import pairwise
 
