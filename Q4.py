@@ -24,7 +24,6 @@ def turnPredictToHistgram(predict, n_clusters):
     predict = accumulate(predict, n_clusters)
     return predict
 
-# edited
 def findTopTen(score_lst):
     index = [x for x in range(0, len(score_lst))]
     score_lst = zip(index, score_lst)

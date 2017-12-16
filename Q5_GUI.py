@@ -25,6 +25,7 @@ import pandas
 global imgs
 global thumb
 
+import Q4
 BOF_preprocess_done = False
 
 class Example(Frame):
@@ -189,7 +190,13 @@ def startSearching(mode,fileName):
         res = sorted(res,key = lambda x: x[1],reverse=True)[:10]
 
     elif mode[1] == "4":    #Q4-Visual_Words_Using_Stop_Words
-        print "4"
+        global BOF_preprocess_done
+        if not BOF_preprocess_done:
+            vocabulary, codewords = Q4.BOF_preprocessing()
+            BOF_preprocess_done = True
+        refinedCodewords, stopWordIndices = Q4.stopWords_preprocessed(5, codewords)
+        res = Q4.search(fileName, vocabulary, refinedCodewords, stopWordIndices)
+        print res
 
     print "\t# Query: " + fileName + " / " + mode
     print res

@@ -29,7 +29,7 @@ def findTopTen(score_lst):
     score_lst = zip(index, score_lst)
     list.sort(score_lst, key= lambda tup: tup[1], reverse= True)
     result = score_lst[:10]
-    return [(indexToJPGName(index), score) for (index, score) in score_lst[:10]]
+    return [[indexToJPGName(index), score] for (index, score) in score_lst[:10]]
 
 def indexToJPGName(index):
     return 'ukbench' + '0'*(5-len(str(index))) + str(index) + '.jpg'
