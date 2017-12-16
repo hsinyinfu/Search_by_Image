@@ -21,7 +21,6 @@ from random import randint
 from scipy.fftpack import dct
 import csv
 import pandas
-import Q3
 
 global imgs
 global thumb
@@ -107,6 +106,14 @@ def Q2_CountDistance(query, base, weight):
         dis += weight[i-1] / 10 * pow(float(query[i]) - float(base[i]),2)
     return sqrt(dis)
 
+def Q3_CountDistance(target, codewords): # both target and codewords are list
+    from sklearn.metrics import pairwise
+    import numpy as np
+    
+    codewords.insert(0, target)
+    scoreList = pairwise.cosine_similarity(np.array(codewords))[0][1:]
+    return scoreList
+
 def maxInList(list):
     max = [0,0.0] #[index,value]
     for l in list:
@@ -155,19 +162,36 @@ def startSearching(mode,fileName):
         res = sorted(res,key = lambda x: x[1])
 
     elif mode[1] == "3":    #Q3-SIFT_Visual_Words
-        global BOF_preprocess_done
-        if not BOF_preprocess_done:
-            vocabulary, codewords = Q3.BOF_preprocessing()
-            BOF_preprocess_done = True
-        #print codewords[0]
-        res = Q3.search(fileName, vocabulary, codewords)
-        #print res
+        res = []
+        n_clusters = 50
+        fileNum =  1006
+        with open('./dataset/Q3.csv', 'rb') as voc:
+            vocReader = csv.reader(voc)
+            qIndex = int(fileName[7:-4]) * (n_clusters+1)
+            data = [row for row in vocReader]
+            base = []
+            #base = [[0 for i in xrange(n_clusters)] for j in xrange(fileNum)]
 
+            for row in xrange(0,len(data),n_clusters+1):
+                b = [0 for i in xrange(n_clusters)]
+                for i in xrange(n_clusters):
+                    #base[row / (n_clusters+1)][i] = int(data[row+i+1][1])
+                    b[i] = int(data[row+i+1][1])
+                base.append(b)
+            
+            list = []
+            for i in xrange(qIndex+1,qIndex+1+n_clusters):
+                list.append(data[i][1])
+    
+        scoreList = Q3_CountDistance(list, base)
+        for x in xrange(0, len(scoreList)):
+            res.append(['ukbench'+data[x*(n_clusters+1)][0][:-4]+'jpg',scoreList[x]])
+        res = sorted(res,key = lambda x: x[1],reverse=True)[:10]
 
     elif mode[1] == "4":    #Q4-Visual_Words_Using_Stop_Words
         print "4"
 
-    print "### Query: " + fileName + " / " + mode
+    print "\t# Query: " + fileName + " / " + mode
     print res
 
     for i in xrange(10):
