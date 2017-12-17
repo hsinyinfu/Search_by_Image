@@ -107,13 +107,37 @@ def Q2_CountDistance(query, base, weight):
         dis += weight[i-1] / 10 * pow(float(query[i]) - float(base[i]),2)
     return sqrt(dis)
 
-def Q3_CountDistance(target, codewords): # both target and codewords are list
+def Q3Q4_CountDistance(target, codewords): # both target and codewords are list
     from sklearn.metrics import pairwise
     import numpy as np
     
     codewords.insert(0, target)
     scoreList = pairwise.cosine_similarity(np.array(codewords))[0][1:]
     return scoreList
+
+def findStopWords(stopWordNum, codewordsHist):
+    sumHistogram = np.zeros(len(codewordsHist[0])).astype('int')
+    for i in codewordsHist:
+        sumHistogram = sumHistogram + np.array(i).astype('int')
+    index = [x for x in range(0, len(sumHistogram))]
+    freq_lst = zip(index, sumHistogram)
+    list.sort(freq_lst, key= lambda tup: tup[1], reverse= True)
+    return [x[0] for x in freq_lst[:stopWordNum]]
+
+def stopwordsRemoved(lst, swIndices):
+    descending = sorted(swIndices, reverse=True)
+    refinedLst = list()
+    for index in descending:
+        refinedLst = lst[:index] + lst[index+1:]
+        lst = refinedLst
+    return refinedLst
+
+def stopWords_preprocessed(stopWordNum, codewords):
+    stopWordIndices = findStopWords(5, codewords)
+    refinedCodewords = list()
+    for i in xrange(len(codewords)):
+        refinedCodewords.append(stopwordsRemoved(codewords[i], stopWordIndices))
+    return (refinedCodewords, stopWordIndices)
 
 def maxInList(list):
     max = [0,0.0] #[index,value]
@@ -165,40 +189,56 @@ def startSearching(mode,fileName):
     elif mode[1] == "3":    #Q3-SIFT_Visual_Words
         res = []
         n_clusters = 50
-        fileNum =  1006
         with open('./dataset/Q3.csv', 'rb') as voc:
             vocReader = csv.reader(voc)
             qIndex = int(fileName[7:-4]) * (n_clusters+1)
             data = [row for row in vocReader]
             base = []
-            #base = [[0 for i in xrange(n_clusters)] for j in xrange(fileNum)]
 
             for row in xrange(0,len(data),n_clusters+1):
                 b = [0 for i in xrange(n_clusters)]
                 for i in xrange(n_clusters):
-                    #base[row / (n_clusters+1)][i] = int(data[row+i+1][1])
                     b[i] = int(data[row+i+1][1])
                 base.append(b)
             
-            list = []
+            query = []
             for i in xrange(qIndex+1,qIndex+1+n_clusters):
-                list.append(data[i][1])
+                query.append(int(data[i][1]))
     
-        scoreList = Q3_CountDistance(list, base)
+        scoreList = Q3Q4_CountDistance(query, base)
         for x in xrange(0, len(scoreList)):
             res.append(['ukbench'+data[x*(n_clusters+1)][0][:-4]+'jpg',scoreList[x]])
         res = sorted(res,key = lambda x: x[1],reverse=True)[:10]
 
     elif mode[1] == "4":    #Q4-Visual_Words_Using_Stop_Words
-        global BOF_preprocess_done
-        if not BOF_preprocess_done:
-            vocabulary, codewords = Q4.BOF_preprocessing()
-            BOF_preprocess_done = True
-        refinedCodewords, stopWordIndices = Q4.stopWords_preprocessed(5, codewords)
-        res = Q4.search(fileName, vocabulary, refinedCodewords, stopWordIndices)
-        print res
+        res = []
+        n_clusters = 50
+        with open('./dataset/Q3.csv', 'rb') as voc:
+            vocReader = csv.reader(voc)
+            qIndex = int(fileName[7:-4]) * (n_clusters+1)
+            data = [row for row in vocReader]
+            base = []
+            
+            for row in xrange(0,len(data),n_clusters+1):
+                b = [0 for i in xrange(n_clusters)]
+                for i in xrange(n_clusters):
+                    b[i] = int(data[row+i+1][1])
+                base.append(b)
+            refineBase, stopWordIndices = stopWords_preprocessed(5, base)
 
-    print "\t# Query: " + fileName + " / " + mode
+            query = []
+            for i in xrange(qIndex+1,qIndex+1+n_clusters):
+                query.append(int(data[i][1]))
+            
+            newQuery = stopwordsRemoved(query,stopWordIndices)
+
+        scoreList = Q3Q4_CountDistance(newQuery, refineBase)
+        for x in xrange(0, len(scoreList)):
+            res.append(['ukbench'+data[x*(n_clusters+1)][0][:-4]+'jpg',scoreList[x]])
+        res = sorted(res,key = lambda x: x[1],reverse=True)[:10]
+
+
+    print "#  Query: " + fileName + " / " + mode
     print res
 
     for i in xrange(10):
