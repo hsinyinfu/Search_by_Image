@@ -25,8 +25,6 @@ import pandas
 global imgs
 global thumb
 
-#import Q4
-#BOF_preprocess_done = False
 
 class Example(Frame):
   
@@ -57,8 +55,6 @@ class Example(Frame):
         
         
         # Mode
-#        clbl = Label(self, text = "-- Select Mode --")
-#        clbl.grid(row=2, column=0, pady=5)
         mode = StringVar(self)
         mode.set('-- Select Mode --')
         menu = OptionMenu(self, mode, 'Q1-Color_Histogram', 'Q2-Color_Layout',
@@ -102,7 +98,7 @@ def Q1_CountDistance(query, base):
 
 def Q2_CountDistance(query, base, weight):
     #Eular Distance
-    dis  = 0
+    dis = 0
     for i in xrange(1,len(query)):
         dis += weight[i-1] / 10 * pow(float(query[i]) - float(base[i]),2)
     return sqrt(dis)
@@ -146,6 +142,13 @@ def maxInList(list):
             max = [list.index(l),l[1]]
     return max[0]
 
+def minInList(list):
+    min = [0,float("inf")] #[index,value]
+    for l in list:
+        if l[1] < min[1]:
+            min = [list.index(l),l[1]]
+    return min[0]
+
 def startSearching(mode,fileName):
     #path = "./dataset/clothing/"
     #query = Image.open(path + fileName)
@@ -159,7 +162,7 @@ def startSearching(mode,fileName):
         return -1
     elif mode[1] == "1":      #Q1-Color_Histogram
         
-        res = [["",1.0] for i in xrange(10)] #[fileName,distance]
+        res = [["",float("inf")] for i in xrange(10)] #[fileName,distance]
         for imgName in dataset:
             img = Image.open(path+'/'+imgName)
             distance = Q1_CountDistance(query,img)
