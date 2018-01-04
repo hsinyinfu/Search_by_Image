@@ -16,14 +16,15 @@ file_number = 1005
 
 #path,dirs,dataset = os.walk(path).next()
 
-# Q2-Color_Layout
 os.remove("./dataset/Q3.csv") if os.path.exists("./dataset/Q3.csv") else None
 
 sift_bag  = sift.read_features_from_file('./dataset/sift/00000.sift')[1]
 for i in xrange(1, file_number+1):
     file_name = path + '0'*(5-len(str(i))) + str(i) + '.sift'
     sift_bag = np.append(sift_bag, sift.read_features_from_file(file_name)[1], axis=0)
+print('sift_bag ready')
 visual_vocabulary = KMeans(n_clusters=n_clusters, random_state=0).fit(sift_bag)
+print('Visual words ready')
 
     #codewords = list()
 with open("./dataset/Q3.csv",'a') as save:

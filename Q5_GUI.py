@@ -25,8 +25,6 @@ import pandas
 global imgs
 global thumb
 
-#import Q4
-#BOF_preprocess_done = False
 
 class Example(Frame):
   
