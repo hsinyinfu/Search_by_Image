@@ -13,11 +13,8 @@ path = './dataset/sift/'
 n_clusters = 50
 file_number = 1005
 
-<<<<<<< HEAD
 #path,dirs,dataset = os.walk(path).next()
 
-=======
->>>>>>> 1e871101fee6acc80648d0c36e3e6b5f51e71fc7
 os.remove("./dataset/Q3.csv") if os.path.exists("./dataset/Q3.csv") else None
 
 sift_bag  = sift.read_features_from_file('./dataset/sift/00000.sift')[1]
