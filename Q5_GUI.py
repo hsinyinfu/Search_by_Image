@@ -181,7 +181,7 @@ def startSearching(mode,fileName):
             data = [row for row in Q2Reader]
             for row in xrange(0,len(data),4):
                 distance = 0
-                for i in xrange(0,4):
+                for i in xrange(1,4):
                     distance += Q2_CountDistance(data[qIndex+i], data[row+i], [j for j in xrange(len(data[0])-1,0,-1)])
                 index = maxInList(res)
                 #print res[index][1]
