@@ -100,7 +100,7 @@ def Q2_CountDistance(query, base, weight):
     #Eular Distance
     dis = 0
     for i in xrange(1,len(query)):
-        dis += weight[i-1] / 10 * pow(float(query[i]) - float(base[i]),2)
+        dis += weight[i-1] / 10 * pow(abs(float(query[i]) - float(base[i])),2)
     return sqrt(dis)
 
 def Q3Q4_CountDistance(target, codewords): # both target and codewords are list
