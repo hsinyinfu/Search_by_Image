@@ -4,7 +4,6 @@
 from PIL import ImageTk, Image
 import os
 import numpy as np
-import sift
 from scipy.fftpack import dct
 from scipy.misc import toimage
 import pandas
