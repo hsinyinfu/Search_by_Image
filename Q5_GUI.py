@@ -151,7 +151,7 @@ def hsvHistogram_CountDistance(hist1, hist2):
             minSum += min(hist1[i][j], hist2[i][j])
             sum1 += hist1[i][j]
             sum2 += hist2[i][j]
-        distance[i] = float(minSum) / float(min(sum1, sum2))
+        distance[i] = 1 - (float(minSum) / float(min(sum1, sum2)))
     return sqrt( pow(distance[0],2) + pow(distance[1],2) + pow(distance[2],2) )
 
 
