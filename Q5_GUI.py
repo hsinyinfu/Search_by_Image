@@ -21,6 +21,7 @@ from random import randint
 from scipy.fftpack import dct
 import csv
 import pandas
+import colorsys
 
 global imgs
 global thumb
@@ -58,7 +59,9 @@ class Example(Frame):
         mode = StringVar(self)
         mode.set('-- Select Mode --')
         menu = OptionMenu(self, mode, 'Q1-Color_Histogram', 'Q2-Color_Layout',
-                          'Q3-SIFT_Visual_Words', 'Q4-Visual_Words_Using_Stop_Words')
+                          'Q3-SIFT_Visual_Words',
+                          'Q4-Visual_Words_Using_Stop_Words', 'Q5-Average_HSV',
+                          'Q6-HSV_Histogram')
         menu.grid(row=1, column=0, pady=5, sticky=W)
         
         # Start Searching
@@ -102,6 +105,68 @@ def Q2_CountDistance(query, base, weight):
     for i in xrange(1,len(query)):
         dis += weight[i-1] / 10 * pow(abs(float(query[i]) - float(base[i])),2)
     return sqrt(dis)
+
+def rgb2AvgHSV(image):
+    avg = [0, 0, 0]
+    width, height = image.size
+    pixel = image.load()
+    for i in range(width):
+        for j in range(height):
+            # rgb or gray
+            r, g, b = (pixel[i,j] if image.mode=='RGB' else [pixel[i,j]]*3) 
+            h, s, v = colorsys.rgb_to_hsv(r/255.0, g/255.0, b/255.0)
+            h, s, v = int(h*360), int(s*100), int(v*255)
+            avg[0] += h
+            avg[1] += s
+            avg[2] += v
+    pixelNum = width * height
+    for i in range(len(avg)):
+        avg[i] /= pixelNum
+    return avg
+
+def rgb2HsvHistogram(image):
+    width, height = image.size
+    hsvHistogram = [[0 for i in range(361)] for j in range(3)]
+    pixel = image.load()
+    for i in range(width):
+        for j in range(height):
+            # rgb or gray
+            r, g, b = (pixel[i,j] if image.mode=='RGB' else [pixel[i,j]]*3) 
+            h, s, v = colorsys.rgb_to_hsv(r/255.0, g/255.0, b/255.0)
+            h, s, v = int(h*360), int(s*100), int(v*255)
+            hsvHistogram[0][h] += 1
+            hsvHistogram[1][s] += 1
+            hsvHistogram[2][v] += 1
+    return hsvHistogram
+
+def hsvHistogram_CountDistance(hist1, hist2):
+    distance = [0, 0, 0]
+    for i in range(len(hist1)):
+        minSum = sum1 = sum2 = 0
+        for j in range(len(hist1[i])):
+            if i == 1 and j >101: 
+                break
+            elif i == 2 and j > 255: 
+                break
+            minSum += min(hist1[i][j], hist2[i][j])
+            sum1 += hist1[i][j]
+            sum2 += hist2[i][j]
+        distance[i] = float(minSum) / float(min(sum1, sum2))
+    return sqrt( pow(distance[0],2) + pow(distance[1],2) + pow(distance[2],2) )
+
+
+def avgHSV_CountDistance(query, base):
+    distance = [0, 0, 0]
+    '''
+    for i in range(len(query)):
+        distance += pow(query[i]-base[i], 2)
+    return sqrt(distance)
+    '''
+    distance[0] = min(abs(query[0]-base[0]), 360-(query[0]-base[0]))/180.0
+    distance[1] = abs(query[1] - base[1]) / 100.0
+    distance[2] = abs(query[2] - base[2]) / 255.0
+    return sqrt(pow(distance[0],2) + pow(distance[1],2) + pow(distance[2],2))
+
 
 def Q3Q4_CountDistance(target, codewords): # both target and codewords are list
     from sklearn.metrics import pairwise
@@ -239,6 +304,38 @@ def startSearching(mode,fileName):
         for x in xrange(0, len(scoreList)):
             res.append(['ukbench'+data[x*(n_clusters+1)][0][:-4]+'jpg',scoreList[x]])
         res = sorted(res,key = lambda x: x[1],reverse=True)[:10]
+    elif mode[1] == "5":      #Q5_average_HSV
+        
+        res = [["",float("inf")] for i in xrange(10)] #[fileName,distance]
+        queryAvgHsv = rgb2AvgHSV(query)
+        for imgName in dataset:
+            img = Image.open(path+'/'+imgName)
+            imgAvgHsv = rgb2AvgHSV(img)
+            distance = avgHSV_CountDistance(queryAvgHsv, imgAvgHsv)
+            #print distance
+            index = maxInList(res)
+            if distance < res[index][1]:
+                res[index] = [imgName,distance]
+        res = sorted(res,key = lambda x: x[1])
+    elif mode[1] == "6":      #Q5_HSV_histogram
+        
+        print "6"
+        res = [["",float("inf")] for i in xrange(10)] #[fileName,distance]
+        print 'query'
+        queryHsvHist = rgb2HsvHistogram(query)
+        print queryHsvHist
+        for imgName in dataset:
+            print imgName
+            img = Image.open(path+'/'+imgName)
+            imgHsvHist = rgb2HsvHistogram(img)
+            print imgHsvHist
+            distance = hsvHistogram_CountDistance(queryHsvHist, imgHsvHist)
+            print distance
+            #print distance
+            index = maxInList(res)
+            if distance < res[index][1]:
+                res[index] = [imgName,distance]
+        res = sorted(res,key = lambda x: x[1])
 
 
     print "#  Query: " + fileName + " / " + mode
