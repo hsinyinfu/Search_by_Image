@@ -106,7 +106,36 @@ def Q2_CountDistance(query, base, weight):
         dis += weight[i-1] / 10 * pow(abs(float(query[i]) - float(base[i])),2)
     return sqrt(dis)
 
-def rgb2AvgHSV(image):
+
+def hsvHistogram_CountDistance(hist1, hist2):
+    distance = [0, 0, 0]
+    for i in range(len(hist1)):
+        minSum = sum1 = sum2 = 0
+        for j in range(len(hist1[i])):
+            if i == 1 and j >101: 
+                break
+            elif i == 2 and j > 255: 
+                break
+            minSum += min(hist1[i][j], int(hist2[i][j+1]))
+            sum1 += hist1[i][j]
+            sum2 += int(hist2[i][j+1])
+        distance[i] = 1 - (float(minSum) / float(min(sum1, sum2)))
+    return sqrt( pow(distance[0],2) + pow(distance[1],2) + pow(distance[2],2) )
+
+
+def hsvAvg_CountDistance(query, base):
+    distance = [0, 0, 0]
+    '''
+    for i in range(len(query)):
+        distance += pow(query[i]-base[i], 2)
+    return sqrt(distance)
+    '''
+    distance[0] = min(abs(query[0]-base[0]), 360-(query[0]-base[0]))/180.0
+    distance[1] = abs(query[1] - base[1]) / 100.0
+    distance[2] = abs(query[2] - base[2]) / 255.0
+    return sqrt(pow(distance[0],2) + pow(distance[1],2) + pow(distance[2],2))
+
+def rgb2HsvAvg(image):
     avg = [0, 0, 0]
     width, height = image.size
     pixel = image.load()
@@ -138,35 +167,6 @@ def rgb2HsvHistogram(image):
             hsvHistogram[1][s] += 1
             hsvHistogram[2][v] += 1
     return hsvHistogram
-
-def hsvHistogram_CountDistance(hist1, hist2):
-    distance = [0, 0, 0]
-    for i in range(len(hist1)):
-        minSum = sum1 = sum2 = 0
-        for j in range(len(hist1[i])):
-            if i == 1 and j >101: 
-                break
-            elif i == 2 and j > 255: 
-                break
-            minSum += min(hist1[i][j], hist2[i][j])
-            sum1 += hist1[i][j]
-            sum2 += hist2[i][j]
-        distance[i] = 1 - (float(minSum) / float(min(sum1, sum2)))
-    return sqrt( pow(distance[0],2) + pow(distance[1],2) + pow(distance[2],2) )
-
-
-def avgHSV_CountDistance(query, base):
-    distance = [0, 0, 0]
-    '''
-    for i in range(len(query)):
-        distance += pow(query[i]-base[i], 2)
-    return sqrt(distance)
-    '''
-    distance[0] = min(abs(query[0]-base[0]), 360-(query[0]-base[0]))/180.0
-    distance[1] = abs(query[1] - base[1]) / 100.0
-    distance[2] = abs(query[2] - base[2]) / 255.0
-    return sqrt(pow(distance[0],2) + pow(distance[1],2) + pow(distance[2],2))
-
 
 def Q3Q4_CountDistance(target, codewords): # both target and codewords are list
     from sklearn.metrics import pairwise
@@ -307,35 +307,32 @@ def startSearching(mode,fileName):
     elif mode[1] == "5":      #Q5_average_HSV
         
         res = [["",float("inf")] for i in xrange(10)] #[fileName,distance]
-        queryAvgHsv = rgb2AvgHSV(query)
-        for imgName in dataset:
-            img = Image.open(path+'/'+imgName)
-            imgAvgHsv = rgb2AvgHSV(img)
-            distance = avgHSV_CountDistance(queryAvgHsv, imgAvgHsv)
-            #print distance
-            index = maxInList(res)
-            if distance < res[index][1]:
-                res[index] = [imgName,distance]
-        res = sorted(res,key = lambda x: x[1])
+        queryAvgHsv = rgb2HsvAvg(query)
+        with open('./dataset/HsvAvg.csv') as data:
+            Reader = csv.reader(data)
+            hsvAvg = [row for row in Reader]
+            for i in range(0, len(hsvAvg), 4):
+                baseAvgHsv = [float(hsvAvg[i+1][1]), float(hsvAvg[i+2][1]),
+                        float(hsvAvg[i+3][1])]
+                distance = hsvAvg_CountDistance(queryAvgHsv, baseAvgHsv) 
+                index = maxInList(res)
+                if distance < res[index][1]:
+                    res[index] = [hsvAvg[i][0],distance]
+            res = sorted(res,key = lambda x: x[1])
     elif mode[1] == "6":      #Q5_HSV_histogram
         
-        print "6"
         res = [["",float("inf")] for i in xrange(10)] #[fileName,distance]
-        print 'query'
         queryHsvHist = rgb2HsvHistogram(query)
-        print queryHsvHist
-        for imgName in dataset:
-            print imgName
-            img = Image.open(path+'/'+imgName)
-            imgHsvHist = rgb2HsvHistogram(img)
-            print imgHsvHist
-            distance = hsvHistogram_CountDistance(queryHsvHist, imgHsvHist)
-            print distance
-            #print distance
-            index = maxInList(res)
-            if distance < res[index][1]:
-                res[index] = [imgName,distance]
-        res = sorted(res,key = lambda x: x[1])
+        with open('./dataset/HsvHistogram.csv') as data:
+            Reader = csv.reader(data)
+            hsvHist = [row for row in Reader]
+            for i in range(0, len(hsvHist), 4):
+                baseHistHsv = [hsvHist[i+1], hsvHist[i+2], hsvHist[i+3]]
+                distance = hsvHistogram_CountDistance(queryHsvHist, baseHistHsv)
+                index = maxInList(res)
+                if distance < res[index][1]:
+                    res[index] = [hsvHist[i][0],distance]
+            res = sorted(res,key = lambda x: x[1])
 
 
     print "#  Query: " + fileName + " / " + mode
